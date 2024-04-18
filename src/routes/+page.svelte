@@ -1,50 +1,49 @@
 <script>
   import ProjectCard from '../lib/components/project-card.svelte';
   import { onMount } from 'svelte';
-  import { request, gql } from 'graphql-request';
+  import { request } from 'graphql-request';
+  import { authorsQuery, projectsQuery } from '$lib/graphql-queries'
 
-  let projects = null;
   const endpoint = import.meta.env.VITE_GRAPHQL_API;
 
-  const query = gql`
-    query GetProjects {
-      projects {
-        name
-        slug
-        description
-        demo
-        sourceCode
-        image {
-          url
-        }
-      }
-    }
-  `;
+  let authors = [];
+  let projects = [];
 
   onMount(async () => {
     try {
-      const { projects: fetchedProjects } = await request(endpoint, query);
+      const { authors: fetchedAuthors } = await request(endpoint, authorsQuery);
+      const { projects: fetchedProjects } = await request(endpoint, projectsQuery);
+      authors = fetchedAuthors;
       projects = fetchedProjects;
     } catch (error) {
       console.error(error);
     }
   });
-
 </script>
 
-<h1>
-  Recent Projects By QSE
+<svelte:head>
+  <title>Quantum Sparks Engineering</title>
+</svelte:head>
+
+<h1 class="font-bold text-center mb-20 text-5xl">
+  Quantum Sparks Engineering
 </h1>
 
-<main>
-  {#if projects}
-    {#each projects as { name, slug, description, image }}
-      <div>
-        <ProjectCard {name} {description} url={image[0].url} {slug} />
-      </div>
-    {/each}
-  {:else}
-    <p>Loading...</p>
-  {/if}
-</main>
+{#each authors as { name, intro, picture: { url } }}
+  <div class="flex mb-40 items-end">
+    <div class="mr-6">
+      <h2 class="text-3xl mb-4 font-bold tracking-wider">{name}</h2>
+      <p class="text-xl mb-4">{intro}</p>
+    </div>
 
+    <img class="mask mask-squircle h-48" src={url} alt={name} />
+  </div>
+{/each}
+
+<div
+  class="grid gap-10 md:grid-cols-4 md:px-10 lg:grid-cols-6 lg:-mx-52"
+>
+  {#each projects as { name, slug, description, image }}
+    <ProjectCard {name} {description} url={image[0].url} {slug} />
+  {/each}
+</div>
